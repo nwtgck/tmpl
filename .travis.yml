@@ -16,7 +16,7 @@ script:
 # Install dependencies
 - dep ensure
 # Check whether build is successful
-- go build
+- go build -o dist/tmpl
 
 cache:
 - apt
