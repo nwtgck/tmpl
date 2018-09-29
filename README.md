@@ -9,14 +9,30 @@ Template Engine for Repository
 go get -u github.com/nwtgck/tmpl
 ```
 
-OR  
-
-Get binary at [Releases](https://github.com/nwtgck/tmpl/releases).
 
 ## Usage
 
+Here is an example to create a project from [docker.tmpl](https://github.com/nwtgck/docker.tmpl).
+
 ```bash
-git clone https://github.com/nwtgck/simple-example.tmpl.git
-tmpl fill simple-example.tmpl/
+tmpl new https://github.com/nwtgck/docker.tmpl.git mydocker
 ```
 
+Then, you have `mydocker/` directory in pwd.
+
+## Use existing .tmpl
+
+```bash
+cd some_existing.tmpl
+tmpl fill
+```
+
+OR
+
+```bash
+tmpl fill some_existing.tmpl
+```
+
+## Binaries
+
+Available binaries at [Releases](https://github.com/nwtgck/tmpl/releases).
