@@ -25,11 +25,14 @@ cache:
 before_deploy:
 # Build macOS binary
 - GOOS=darwin GOARCH=amd64 go build -o tmpl-${TRAVIS_TAG}-darwin-amd64
+# Build Linux binary
+- GOOS=linux GOARCH=amd64 go build -o tmpl-${TRAVIS_TAG}-linux-amd64
 deploy:
   provider: releases
   api_key: $GITHUB_TOKEN
   file:
   - tmpl-${TRAVIS_TAG}-darwin-amd64
+  - tmpl-${TRAVIS_TAG}-linux-amd64
   skip_cleanup: true
   on:
     tags: true
