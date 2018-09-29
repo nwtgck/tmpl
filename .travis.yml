@@ -1,0 +1,38 @@
+language: go
+
+go:
+- "1.10"
+
+before_install:
+# Install dep
+# (from: https://github.com/sue445/zatsu_monitor/blob/c265f1b9301c056cbac5006952270812c9155266/.travis.yml)
+- go get github.com/golang/dep/...
+
+# (from: https://github.com/sue445/zatsu_monitor/blob/c265f1b9301c056cbac5006952270812c9155266/.travis.yml)
+install:
+- $GOPATH/bin/dep ensure
+
+script:
+# Install dependencies
+- dep ensure
+# Check whether build is successful
+- go build
+
+cache:
+- apt
+
+# (from: https://docs.travis-ci.com/user/deployment/releases/)
+before_deploy:
+# Build macOS binary
+- GOOS=darwin GOARCH=amd64 go build -o tmpl-${TRAVIS_TAG}-darwin-amd64
+# Build Linux binary
+- GOOS=linux GOARCH=amd64 go build -o tmpl-${TRAVIS_TAG}-linux-amd64
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file:
+  - tmpl-${TRAVIS_TAG}-darwin-amd64
+  - tmpl-${TRAVIS_TAG}-linux-amd64
+  skip_cleanup: true
+  on:
+    tags: true
