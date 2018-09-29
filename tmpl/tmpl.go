@@ -22,6 +22,23 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
+func FillVariables(dirPath string) {
+	tmplYaml, err := ReadTemplYaml(dirPath)
+	if err != nil {
+		panic(err)
+	}
+	// Input variable values from user input
+	variables := InputVariables(tmplYaml.Variables)
+
+	// Combine reserved variables
+	for name, value := range GetReservedVariables() {
+		variables[name] = value
+	}
+
+	// Replace files in the directory
+	ReplaceInDir(dirPath, variables)
+}
+
 func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
 	result := []diffmatchpatch.Diff{}
 	hasDiffInLine := false
