@@ -1,0 +1,34 @@
+package cmd
+
+import (
+	"fmt"
+	"github.com/nwtgck/tmpl/tmpl"
+	"github.com/spf13/cobra"
+	"github.com/MakeNowJust/heredoc"
+	"io/ioutil"
+	"os"
+)
+
+func init() {
+	RootCmd.AddCommand(initCmd)
+}
+
+var initYaml = heredoc.Doc(fmt.Sprintf(`
+# This is an example of %s
+
+# variables:
+#	 project_name: My Project
+`, tmpl.TmplYamlName))
+
+var initCmd = &cobra.Command{
+	Use: "init",
+	Short: fmt.Sprintf("Create %s", tmpl.TmplYamlName),
+	Run: func(cmd *cobra.Command, args []string) {
+		err := ioutil.WriteFile(tmpl.TmplYamlName, []byte(initYaml), 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Write failed with %s\n", err)
+			os.Exit(-1)
+		}
+		fmt.Printf("'%s' created!\n", tmpl.TmplYamlName)
+	},
+}

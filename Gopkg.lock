@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:9831b48eaba66c6eee6b8bc698d5a669088313cfee3c94435056e3522e4a53fb"
+  name = "github.com/MakeNowJust/heredoc"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e9091a26100e9cfb2b6a8f470085bfa541931a91"
+
+[[projects]]
   digest = "1:c08f898868838e16e9f6caa00ea6eeb2bcbfcd8a374f602c3e3b305092079a3f"
   name = "github.com/cbroglie/mustache"
   packages = ["."]
@@ -53,6 +61,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/MakeNowJust/heredoc",
     "github.com/cbroglie/mustache",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/spf13/cobra",
