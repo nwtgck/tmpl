@@ -4,11 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/cbroglie/mustache"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 )
 
+type TmplYaml struct {
+	Variables map[string]string `yaml:variables`
+}
+
+const TmplYamlName = "tmpl.yaml"
 
 func replaceInDir(dirPath string, variables map[string]string) error {
 	// Each file in the root directory
@@ -41,17 +48,28 @@ func inputVariables(prompt map[string]string) map[string]string {
 	return variables
 }
 
-func main(){
-	// TODO: Hard code (this will be defined by .yaml)
-	prompt := map[string]string{
-		"myvar1": "this is myvar1",
-		"myvar2": "this is not myvar1 but 2",
+func readTemplYaml(dirPath string) (TmplYaml, error) {
+	// TODO: Check existence of tmpl.yaml
+	buf, err := ioutil.ReadFile(path.Join(dirPath, TmplYamlName))
+	// Create
+	var tmplYaml TmplYaml
+	err = yaml.Unmarshal(buf, &tmplYaml)
+	if err != nil {
+		return tmplYaml, err
 	}
-	// Input variable values from user input
-	variables := inputVariables(prompt)
+	return tmplYaml, err
+}
+
+func main(){
 	// Get root directory path
 	// TODO: Error handling
 	dirPath := os.Args[1]
+	tmplYaml, err := readTemplYaml(dirPath)
+	if err != nil {
+		panic(err)
+	}
+	// Input variable values from user input
+	variables := inputVariables(tmplYaml.Variables)
 	// Replace files in the directory
 	replaceInDir(dirPath, variables)
 }
