@@ -7,8 +7,12 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type TmplYaml struct {
@@ -60,6 +64,32 @@ func readTemplYaml(dirPath string) (TmplYaml, error) {
 	return tmplYaml, err
 }
 
+func gitUserName() string {
+	out, err := exec.Command("git", "config", "user.name").Output()
+	if err != nil || len(out) == 0 {
+		return ""
+	} else {
+		return strings.TrimRight(string(out), "\n")
+	}
+}
+
+func gitUserEmail() string {
+	out, err := exec.Command("git", "config", "user.email").Output()
+	if err != nil || len(out) == 0 {
+		return ""
+	} else {
+		return strings.TrimRight(string(out), "\n")
+	}
+}
+
+func getReservedVariables() map[string]string {
+	return map[string]string {
+		"$year": strconv.Itoa(time.Now().Year()),
+		"$git_user_name": gitUserName(),
+		"$git_user_email": gitUserEmail(),
+	}
+}
+
 func main(){
 	// Get root directory path
 	// TODO: Error handling
@@ -70,6 +100,12 @@ func main(){
 	}
 	// Input variable values from user input
 	variables := inputVariables(tmplYaml.Variables)
+
+	// Combine reserved variables
+	for name, value := range getReservedVariables() {
+		variables[name] = value
+	}
+
 	// Replace files in the directory
 	replaceInDir(dirPath, variables)
 }
