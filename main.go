@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/cbroglie/mustache"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -21,16 +22,60 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
+func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
+	result := []diffmatchpatch.Diff{}
+	hasDiffInLine := false
+	lineDiffs := []diffmatchpatch.Diff{}
+	for _, diff := range diffs {
+		hasDiff := diff.Type != diffmatchpatch.DiffEqual
+		hasNewLine := strings.Contains(diff.Text, "\n")
+		if hasDiff {
+			// Set flag
+			hasDiffInLine = true
+		}
+		// If diff has newline
+		if hasNewLine {
+			// If diffs have some diff in line
+			if hasDiffInLine {
+				result = append(result, lineDiffs...)
+			}
+			hasDiffInLine = false
+			lineDiffs = []diffmatchpatch.Diff{}
+		}
+
+		// Append to line-diffs
+		lineDiffs = append(lineDiffs, diff)
+	}
+	// If diffs have some diff in line
+	if hasDiffInLine {
+		result = append(result, lineDiffs...)
+	}
+	return result
+}
+
 func replaceInDir(dirPath string, variables map[string]string) error {
+	dmp := diffmatchpatch.New()
 	// Each file in the root directory
 	// (from: https://flaviocopes.com/go-list-files/)
 	filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		// If path is not directory path
 		if !info.IsDir(){
-			// Just print file path
-			fmt.Printf("====== %s ======\n", path)
+			// Read whole file content
+			original, _ := ioutil.ReadFile(path)
+			// Filled with variables
 			data, _  := mustache.RenderFile(path, variables)
+			// Overwrite filled one
 			ioutil.WriteFile(path, []byte(data), info.Mode())
+			// Calculate diffs between original and filled one
+			diffs := dmp.DiffMain(string(original), data, false)
+			// Compact diffs
+			compactDiffs := getCompactDiffs(diffs)
+			// If there are diffs
+			if len(compactDiffs) != 0 {
+				// Print diffs
+				fmt.Printf("====== %s ======\n", path)
+				fmt.Println(dmp.DiffPrettyText(compactDiffs))
+			}
 		}
 		return nil
 	})
