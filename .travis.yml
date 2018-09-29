@@ -1,0 +1,22 @@
+language: go
+
+go:
+- "1.10"
+
+before_install:
+# Install dep
+# (from: https://github.com/sue445/zatsu_monitor/blob/c265f1b9301c056cbac5006952270812c9155266/.travis.yml)
+- go get github.com/golang/dep/...
+
+# (from: https://github.com/sue445/zatsu_monitor/blob/c265f1b9301c056cbac5006952270812c9155266/.travis.yml)
+install:
+- $GOPATH/bin/dep ensure
+
+script:
+# Install dependencies
+- dep ensure
+# Check whether build is successful
+- go build
+
+cache:
+- apt
