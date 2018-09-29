@@ -14,8 +14,8 @@ var fillCmd = &cobra.Command{
 	Short: "Fill .tmpl/ with variables",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get root directory path
-		// TODO: Error handling
-		dirPath := args[0]
+		// (from: https://stackoverflow.com/a/31483763/2885946)
+		dirPath := map[bool]string{true: args[0], false: "."}[len(args) >= 1]
 		tmplYaml, err := tmpl.ReadTemplYaml(dirPath)
 		if err != nil {
 			panic(err)
