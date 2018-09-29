@@ -32,6 +32,17 @@ var newCmd = &cobra.Command{
 		}
 		// Git dir path
 		dirPath := getFileNameWithoutExt(gitRepoPath)
+		if len(args) == 2 {
+			// Get renamed repoName name
+			repoName := args[1]
+			// Rename dir
+			err := os.Rename(dirPath, repoName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Rename failed with %s\n", err)
+				os.Exit(-1)
+			}
+			dirPath = repoName
+		}
 		// Fill .tmpl with variables
 		tmpl.FillVariables(dirPath)
 	},
