@@ -16,8 +16,9 @@ func init() {
 var initYaml = heredoc.Doc(fmt.Sprintf(`
 # This is an example of %s
 
+# (Structure is <variable name>: <description>)
 # variables:
-#	 project_name: My Project
+#  project_name: Project Name
 `, tmpl.TmplYamlName))
 
 var initCmd = &cobra.Command{
