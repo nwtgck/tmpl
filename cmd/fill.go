@@ -19,19 +19,6 @@ var fillCmd = &cobra.Command{
 		if len(args) >= 1 {
 			dirPath = args[0]
 		}
-		tmplYaml, err := tmpl.ReadTemplYaml(dirPath)
-		if err != nil {
-			panic(err)
-		}
-		// Input variable values from user input
-		variables := tmpl.InputVariables(tmplYaml.Variables)
-
-		// Combine reserved variables
-		for name, value := range tmpl.GetReservedVariables() {
-			variables[name] = value
-		}
-
-		// Replace files in the directory
-		tmpl.ReplaceInDir(dirPath, variables)
+		tmpl.FillVariables(dirPath)
 	},
 }
