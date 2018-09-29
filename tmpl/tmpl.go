@@ -17,7 +17,9 @@ import (
 )
 
 type TmplYaml struct {
-	Variables map[string]string `yaml:variables`
+	// NOTE: yaml.MapSlice preserves the order of items
+	// (from: https://stackoverflow.com/a/42109240/2885946)
+	Variables yaml.MapSlice `yaml:variables`
 }
 
 const TmplYamlName = "tmpl.yaml"
@@ -99,10 +101,14 @@ func ReplaceInDir(dirPath string, variables map[string]string) error {
 	return nil
 }
 
-func InputVariables(prompt map[string]string) map[string]string {
+func InputVariables(prompt yaml.MapSlice) map[string]string {
 	scanner := bufio.NewScanner(os.Stdin)
 	variables := map[string]string{}
-	for varName, desc := range prompt {
+	for _, item := range prompt {
+		// Get variable name
+		varName := item.Key.(string)
+		// Get description
+		desc    := item.Value.(string)
 		// Print variable name and description
 		fmt.Printf("%s (%s) = ", varName, desc)
 		// Get line
