@@ -56,7 +56,11 @@ var newCmd = &cobra.Command{
 		defer os.RemoveAll(tmpRepoPath)
 
 		// Fill .tmpl with variables
-		tmpl.FillVariables(dirPath)
+		err = tmpl.FillVariables(dirPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Fill failed with %s.\n", err)
+			os.Exit(-1)
+		}
 	},
 }
 

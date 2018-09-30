@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/nwtgck/tmpl/tmpl"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 func init() {
@@ -19,6 +21,10 @@ var fillCmd = &cobra.Command{
 		if len(args) >= 1 {
 			dirPath = args[0]
 		}
-		tmpl.FillVariables(dirPath)
+		err := tmpl.FillVariables(dirPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Fill failed with %s.\n", err)
+			os.Exit(-1)
+		}
 	},
 }
