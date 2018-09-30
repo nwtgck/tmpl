@@ -21,7 +21,7 @@ var fillCmd = &cobra.Command{
 		if len(args) >= 1 {
 			dirPath = args[0]
 		}
-		err := tmpl.FillVariables(dirPath)
+		err := tmpl.FillVariables(dirPath, true) // TODO: enableYamlParse is hard coded
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Fill failed with %s.\n", err)
 			os.Exit(-1)

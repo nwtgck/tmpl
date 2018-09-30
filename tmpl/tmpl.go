@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/nwtgck/tmpl/util"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -24,16 +25,16 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
-func FillVariables(dirPath string) error {
+func FillVariables(dirPath string, enableYamlParse bool) error {
 	tmplYaml, err := ReadTemplYaml(dirPath)
 	if err != nil {
 		return err
 	}
 	// Input variable values from user input
-	inputVariables := InputVariables(tmplYaml.Variables)
+	inputVariables := InputVariables(tmplYaml.Variables, enableYamlParse)
 
 	// Combine reserved variables
-	variables := GetReservedVariables()
+	variables := GetReservedVariables(enableYamlParse)
 	for name, value := range inputVariables {
 		variables[name] = value
 	}
@@ -43,33 +44,26 @@ func FillVariables(dirPath string) error {
 	return err
 }
 
-func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
-	result := []diffmatchpatch.Diff{}
-	hasDiffInLine := false
-	lineDiffs := []diffmatchpatch.Diff{}
-	for _, diff := range diffs {
-		hasDiff := diff.Type != diffmatchpatch.DiffEqual
-		hasNewLine := strings.Contains(diff.Text, "\n")
-		if hasDiff {
-			// Set flag
-			hasDiffInLine = true
-		}
-		// If diff has newline
-		if hasNewLine {
-			// If diffs have some diff in line
-			if hasDiffInLine {
-				result = append(result, lineDiffs...)
-			}
-			hasDiffInLine = false
-			lineDiffs = []diffmatchpatch.Diff{}
-		}
+func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string) []diffmatchpatch.Diff {
+	// Calculate diffs between original and filled one
+	// (from: https://qiita.com/shibukawa/items/dd75ad01e623c4c1166b)
+	a, b, c := dmp.DiffLinesToChars(original, filled)
+	diffs := dmp.DiffMain(a, b, false)
+	lineBasedDiffs := dmp.DiffCharsToLines(diffs, c)
 
-		// Append to line-diffs
-		lineDiffs = append(lineDiffs, diff)
-	}
-	// If diffs have some diff in line
-	if hasDiffInLine {
-		result = append(result, lineDiffs...)
+	// Use only not-equal diff
+	result := []diffmatchpatch.Diff{}
+	for _, d := range lineBasedDiffs {
+		if d.Type != diffmatchpatch.DiffEqual {
+			// Prepend "+" / "-"
+			switch d.Type {
+			case diffmatchpatch.DiffInsert:
+				d.Text = "+ " + d.Text
+			case diffmatchpatch.DiffDelete:
+				d.Text = "- " + d.Text
+			}
+			result = append(result, d)
+		}
 	}
 	return result
 }
@@ -101,17 +95,16 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 			if err != nil {
 				return err
 			}
-			//// Overwrite filled one
+			// Overwrite filled one
 			ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
-			// Calculate diffs between original and filled one
-			diffs := dmp.DiffMain(string(original), buf.String(), false)
-			// Compact diffs
-			compactDiffs := getCompactDiffs(diffs)
+
+			// Get diffs
+			diffs := getDiffs(dmp, string(original), buf.String())
 			// If there are diffs
-			if len(compactDiffs) != 0 {
+			if len(diffs) != 0 {
 				// Print diffs
 				fmt.Printf("====== %s ======\n", fpath)
-				fmt.Println(dmp.DiffPrettyText(compactDiffs))
+				fmt.Println(dmp.DiffPrettyText(diffs))
 			}
 		}
 		return nil
@@ -119,9 +112,9 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 	return err
 }
 
-func InputVariables(prompt yaml.MapSlice) map[string]string {
+func InputVariables(prompt yaml.MapSlice, enableYamlParse bool) map[string]interface{} {
 	scanner := bufio.NewScanner(os.Stdin)
-	variables := map[string]string{}
+	variables := map[string]interface{}{}
 	for _, item := range prompt {
 		// Get variable name
 		varName := item.Key.(string)
@@ -132,8 +125,20 @@ func InputVariables(prompt yaml.MapSlice) map[string]string {
 		// Get line
 		scanner.Scan()
 		line := scanner.Text()
+
+		var value interface{}
+		if enableYamlParse {
+			// Parse line and assign into value
+			err := yaml.Unmarshal([]byte(line), &value)
+			if err != nil {
+				value = line
+			}
+			fmt.Println(value)
+		} else {
+			value = line
+		}
 		// Add pair of variable name and its value
-		variables[varName] = line
+		variables[varName] = value
 	}
 	return variables
 }
@@ -168,8 +173,28 @@ func gitUserEmail() string {
 	}
 }
 
-func GetReservedVariables() map[string]interface{} {
+func GetReservedVariables(enableYamlParse bool) map[string]interface{} {
+	env := map[string]interface{}{}
+	if enableYamlParse {
+		// Parse environment variable
+		for name, valueStr := range util.GetEnv() {
+			var value interface{}
+			// Parse value string
+			err := yaml.Unmarshal([]byte(valueStr), &value)
+			if err == nil {
+				env[name] = value
+			} else {
+				env[name] = valueStr
+			}
+		}
+	} else {
+		for name, valueStr := range util.GetEnv() {
+			env[name] = valueStr
+		}
+	}
+
 	return map[string]interface{} {
+		"Env": env,
 		"Now": map[string]interface{}{
 			"year": time.Now().Year(),
 		},
