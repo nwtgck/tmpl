@@ -24,13 +24,13 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
-func FillVariables(dirPath string) error {
+func FillVariables(dirPath string, enableYamlParse bool) error {
 	tmplYaml, err := ReadTemplYaml(dirPath)
 	if err != nil {
 		return err
 	}
 	// Input variable values from user input
-	inputVariables := InputVariables(tmplYaml.Variables)
+	inputVariables := InputVariables(tmplYaml.Variables, enableYamlParse)
 
 	// Combine reserved variables
 	variables := GetReservedVariables()
@@ -111,9 +111,9 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 	return err
 }
 
-func InputVariables(prompt yaml.MapSlice) map[string]string {
+func InputVariables(prompt yaml.MapSlice, enableYamlParse bool) map[string]interface{} {
 	scanner := bufio.NewScanner(os.Stdin)
-	variables := map[string]string{}
+	variables := map[string]interface{}{}
 	for _, item := range prompt {
 		// Get variable name
 		varName := item.Key.(string)
@@ -124,8 +124,17 @@ func InputVariables(prompt yaml.MapSlice) map[string]string {
 		// Get line
 		scanner.Scan()
 		line := scanner.Text()
+
+		var value interface{}
+		if enableYamlParse {
+			// Parse line and assign into value
+			yaml.Unmarshal([]byte(line), &value)
+			fmt.Println(value)
+		} else {
+			value = line
+		}
 		// Add pair of variable name and its value
-		variables[varName] = line
+		variables[varName] = value
 	}
 	return variables
 }

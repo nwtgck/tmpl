@@ -56,7 +56,7 @@ var newCmd = &cobra.Command{
 		defer os.RemoveAll(tmpRepoPath)
 
 		// Fill .tmpl with variables
-		err = tmpl.FillVariables(dirPath)
+		err = tmpl.FillVariables(dirPath, true) // TODO: enableYamlParse is hard coded
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Fill failed with %s.\n", err)
 			os.Exit(-1)
