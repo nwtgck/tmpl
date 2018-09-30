@@ -68,6 +68,32 @@ func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string
 	return result
 }
 
+func getElidedDiffs(diffs []diffmatchpatch.Diff, firstElidedNum int) []diffmatchpatch.Diff {
+	result := []diffmatchpatch.Diff{}
+	for _, diff := range diffs {
+		elidedDiff := diffmatchpatch.Diff{
+			diff.Type,
+			getElidedText(diff.Text, firstElidedNum),
+		}
+		result = append(result, elidedDiff)
+	}
+	return result
+}
+
+func getElidedText(text string, firstElidedNum int) string {
+	lines := strings.Split(text,"\n")
+	if len(lines) > (firstElidedNum*2 + 3) {
+		return (
+			strings.Join(lines[:firstElidedNum], "\n") +
+			"\n..............\n" +
+			"\n...(elided)...\n" +
+			"\n..............\n" +
+			strings.Join(lines[len(lines)-firstElidedNum:], "\n"))
+	} else {
+		return text;
+	}
+}
+
 func ReplaceInDir(dirPath string, variables map[string]interface{}, dryRun bool) error {
 	dmp := diffmatchpatch.New()
 	// Each file in the root directory
@@ -103,6 +129,9 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}, dryRun bool)
 
 			// Get diffs
 			diffs := getDiffs(dmp, string(original), buf.String())
+			// Get compact diffs
+			// TODO: Use conditional variable to use getElidedDiffs()
+			diffs = getElidedDiffs(diffs, 3)
 			// If there are diffs
 			if len(diffs) != 0 {
 				// Print diffs
