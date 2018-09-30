@@ -17,7 +17,7 @@ var newCmd = &cobra.Command{
 	Use: "new",
 	Short: "Download template from Git repo and Fill",
 	Run: func(cmd *cobra.Command, args []string) {
-		if (len(args) == 0) {
+		if len(args) == 0 {
 			fmt.Fprintln(os.Stderr, "Error: Git repository path is not specified")
 			os.Exit(-1)
 		}
