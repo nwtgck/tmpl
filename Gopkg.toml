@@ -1,7 +1,3 @@
-[[constraint]]
-  name = "github.com/cbroglie/mustache"
-  version = "1.0.1"
-
 [prune]
   go-tests = true
   unused-packages = true

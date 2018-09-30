@@ -2,8 +2,8 @@ package tmpl
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
-	"github.com/cbroglie/mustache"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -11,8 +11,8 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -24,21 +24,23 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
-func FillVariables(dirPath string) {
+func FillVariables(dirPath string) error {
 	tmplYaml, err := ReadTemplYaml(dirPath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	// Input variable values from user input
-	variables := InputVariables(tmplYaml.Variables)
+	inputVariables := InputVariables(tmplYaml.Variables)
 
 	// Combine reserved variables
-	for name, value := range GetReservedVariables() {
+	variables := GetReservedVariables()
+	for name, value := range inputVariables {
 		variables[name] = value
 	}
 
 	// Replace files in the directory
-	ReplaceInDir(dirPath, variables)
+	err = ReplaceInDir(dirPath, variables)
+	return err
 }
 
 func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
@@ -72,33 +74,49 @@ func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
 	return result
 }
 
-func ReplaceInDir(dirPath string, variables map[string]string) error {
+func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 	dmp := diffmatchpatch.New()
 	// Each file in the root directory
 	// (from: https://flaviocopes.com/go-list-files/)
-	filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		// If path is not directory path
-		if !info.IsDir(){
+	err := filepath.Walk(dirPath, func(fpath string, info os.FileInfo, err error) error {
+		// If fpath is in .git directory
+		// TODO: Use better way
+		if strings.Contains(fpath, ".git/") {
+			// Skip
+			return nil
+		// If fpath is not directory fpath
+		} else if !info.IsDir(){
 			// Read whole file content
-			original, _ := ioutil.ReadFile(path)
-			// Filled with variables
-			data, _  := mustache.RenderFile(path, variables)
-			// Overwrite filled one
-			ioutil.WriteFile(path, []byte(data), info.Mode())
+			original, _ := ioutil.ReadFile(fpath)
+			// (from: https://stackoverflow.com/a/49043639/2885946)
+			name := path.Base(fpath)
+			// Create a new template and parse the letter into it.
+			// (from: https://golang.org/pkg/text/template/#example_Template)
+			t, err := template.New(name).ParseFiles(fpath)
+			if err != nil {
+				return err
+			}
+			buf := &bytes.Buffer{}
+			err = t.Execute(buf, variables)
+			if err != nil {
+				return err
+			}
+			//// Overwrite filled one
+			ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
 			// Calculate diffs between original and filled one
-			diffs := dmp.DiffMain(string(original), data, false)
+			diffs := dmp.DiffMain(string(original), buf.String(), false)
 			// Compact diffs
 			compactDiffs := getCompactDiffs(diffs)
 			// If there are diffs
 			if len(compactDiffs) != 0 {
 				// Print diffs
-				fmt.Printf("====== %s ======\n", path)
+				fmt.Printf("====== %s ======\n", fpath)
 				fmt.Println(dmp.DiffPrettyText(compactDiffs))
 			}
 		}
 		return nil
 	})
-	return nil
+	return err
 }
 
 func InputVariables(prompt yaml.MapSlice) map[string]string {
@@ -150,10 +168,16 @@ func gitUserEmail() string {
 	}
 }
 
-func GetReservedVariables() map[string]string {
-	return map[string]string {
-		"$year": strconv.Itoa(time.Now().Year()),
-		"$git_user_name": gitUserName(),
-		"$git_user_email": gitUserEmail(),
+func GetReservedVariables() map[string]interface{} {
+	return map[string]interface{} {
+		"Now": map[string]interface{}{
+			"year": time.Now().Year(),
+		},
+		"Git": map[string]interface{}{
+			"user": map[string]string{
+				"name": gitUserName(),
+				"email": gitUserEmail(),
+			},
+		},
 	}
 }
