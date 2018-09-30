@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/nwtgck/tmpl/tmpl"
+	"github.com/nwtgck/tmpl/util"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,26 +25,36 @@ var newCmd = &cobra.Command{
 		}
 		// Get git repository path
 		gitRepoPath := args[0]
+		// Git tmpRepoPath path
+		dirPath := getFileNameWithoutExt(gitRepoPath)
+		if len(args) == 2 {
+			dirPath = args[1]
+		}
+		if util.Exists(dirPath) {
+			fmt.Fprintf(os.Stderr, "Error: '%s' already exists.\n", dirPath)
+			os.Exit(-1)
+		}
+		tmpRepoPath, err := ioutil.TempDir("", "repo")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Temporary directory creation failed with %s\n", err)
+			os.Exit(-1)
+		}
 		// Git clone
 		fmt.Printf("Cloning '%s'...\n", gitRepoPath)
-		err := exec.Command("git", "clone", "--recursive", gitRepoPath).Run()
+		err = exec.Command("git", "clone", "--recursive", gitRepoPath, tmpRepoPath).Run()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Clone failed with %s\n", err)
 			os.Exit(-1)
 		}
-		// Git dir path
-		dirPath := getFileNameWithoutExt(gitRepoPath)
-		if len(args) == 2 {
-			// Get renamed repoName name
-			repoName := args[1]
-			// Rename dir
-			err := os.Rename(dirPath, repoName)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Rename failed with %s\n", err)
-				os.Exit(-1)
-			}
-			dirPath = repoName
+		// Move tmpRepoPath to dirPath
+		err = os.Rename(tmpRepoPath, dirPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Rename failed with %s\n", err)
+			os.Exit(-1)
 		}
+		// Clean up temp directory
+		defer os.RemoveAll(tmpRepoPath)
+
 		// Fill .tmpl with variables
 		tmpl.FillVariables(dirPath)
 	},
