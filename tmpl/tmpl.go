@@ -25,7 +25,7 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
-func FillVariables(dirPath string, enableYamlParse bool) error {
+func FillVariables(dirPath string, enableYamlParse bool, dryRun bool) error {
 	tmplYaml, err := ReadTemplYaml(dirPath)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func FillVariables(dirPath string, enableYamlParse bool) error {
 	}
 
 	// Replace files in the directory
-	err = ReplaceInDir(dirPath, variables)
+	err = ReplaceInDir(dirPath, variables, dryRun)
 	return err
 }
 
@@ -68,7 +68,7 @@ func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string
 	return result
 }
 
-func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
+func ReplaceInDir(dirPath string, variables map[string]interface{}, dryRun bool) error {
 	dmp := diffmatchpatch.New()
 	// Each file in the root directory
 	// (from: https://flaviocopes.com/go-list-files/)
@@ -95,8 +95,11 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 			if err != nil {
 				return err
 			}
-			// Overwrite filled one
-			ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
+			// Not dry-run
+			if !dryRun {
+				// Overwrite filled one
+				ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
+			}
 
 			// Get diffs
 			diffs := getDiffs(dmp, string(original), buf.String())

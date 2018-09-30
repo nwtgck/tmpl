@@ -11,8 +11,12 @@ import (
 	"path/filepath"
 )
 
+// Dry-run fill
+var newDryRun bool
+
 func init() {
 	RootCmd.AddCommand(newCmd)
+	newCmd.Flags().BoolVarP(&newDryRun, "dry-run", "n", false, "dry-run")
 }
 
 var newCmd = &cobra.Command{
@@ -30,7 +34,7 @@ var newCmd = &cobra.Command{
 		if len(args) == 2 {
 			dirPath = args[1]
 		}
-		if util.Exists(dirPath) {
+		if !newDryRun && util.Exists(dirPath) {
 			if util.Ask4confirm(fmt.Sprintf("Are you sure to overwrite '%s'? ", dirPath)) {
 				os.RemoveAll(dirPath)
 			} else {
@@ -50,21 +54,26 @@ var newCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Clone failed with %s\n", err)
 			os.Exit(-1)
 		}
-		// Move tmpRepoPath to dirPath
-		err = os.Rename(tmpRepoPath, dirPath)
+		if newDryRun {
+			// Use temporary repo path
+			dirPath = tmpRepoPath
+		} else {
+			// Move tmpRepoPath to dirPath
+			err = os.Rename(tmpRepoPath, dirPath)
+		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Rename failed with %s\n", err)
 			os.Exit(-1)
 		}
-		// Clean up temp directory
-		defer os.RemoveAll(tmpRepoPath)
 
 		// Fill .tmpl with variables
-		err = tmpl.FillVariables(dirPath, true) // TODO: enableYamlParse is hard coded
+		err = tmpl.FillVariables(dirPath, true, newDryRun) // TODO: enableYamlParse is hard coded
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Fill failed with %s.\n", err)
 			os.Exit(-1)
 		}
+		// Clean up temp directory
+		defer os.RemoveAll(tmpRepoPath)
 	},
 }
 
