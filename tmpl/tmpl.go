@@ -78,30 +78,31 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 	dmp := diffmatchpatch.New()
 	// Each file in the root directory
 	// (from: https://flaviocopes.com/go-list-files/)
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		// If path is in .git directory
+	err := filepath.Walk(dirPath, func(fpath string, info os.FileInfo, err error) error {
+		// If fpath is in .git directory
 		// TODO: Use better way
-		if strings.Contains(path, ".git/") {
+		if strings.Contains(fpath, ".git/") {
 			// Skip
 			return nil
-		// If path is not directory path
+		// If fpath is not directory fpath
 		} else if !info.IsDir(){
 			// Read whole file content
-			original, _ := ioutil.ReadFile(path)
+			original, _ := ioutil.ReadFile(fpath)
+			// (from: https://stackoverflow.com/a/49043639/2885946)
+			name := path.Base(fpath)
 			// Create a new template and parse the letter into it.
 			// (from: https://golang.org/pkg/text/template/#example_Template)
-			files, err := template.New(path).ParseFiles(path)
+			t, err := template.New(name).ParseFiles(fpath)
 			if err != nil {
 				return err
 			}
-			t := template.Must(files, nil)
 			buf := &bytes.Buffer{}
 			err = t.Execute(buf, variables)
 			if err != nil {
 				return err
 			}
 			//// Overwrite filled one
-			ioutil.WriteFile(path, buf.Bytes(), info.Mode())
+			ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
 			// Calculate diffs between original and filled one
 			diffs := dmp.DiffMain(string(original), buf.String(), false)
 			// Compact diffs
@@ -109,7 +110,7 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 			// If there are diffs
 			if len(compactDiffs) != 0 {
 				// Print diffs
-				fmt.Printf("====== %s ======\n", path)
+				fmt.Printf("====== %s ======\n", fpath)
 				fmt.Println(dmp.DiffPrettyText(compactDiffs))
 			}
 		}
