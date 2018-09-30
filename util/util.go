@@ -29,3 +29,13 @@ func Ask4confirm(message string) bool {
 
 	return s == "y" || s == "yes"
 }
+
+func GetEnv() map[string]string {
+	// (from: https://gobyexample.com/environment-variables)
+	env := map[string]string{}
+	for _, e := range os.Environ() {
+		pair := strings.Split(e, "=")
+		env[pair[0]] = pair[1]
+	}
+	return env
+}

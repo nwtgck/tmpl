@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/nwtgck/tmpl/util"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -33,7 +34,7 @@ func FillVariables(dirPath string, enableYamlParse bool) error {
 	inputVariables := InputVariables(tmplYaml.Variables, enableYamlParse)
 
 	// Combine reserved variables
-	variables := GetReservedVariables()
+	variables := GetReservedVariables(enableYamlParse)
 	for name, value := range inputVariables {
 		variables[name] = value
 	}
@@ -169,8 +170,24 @@ func gitUserEmail() string {
 	}
 }
 
-func GetReservedVariables() map[string]interface{} {
+func GetReservedVariables(enableYamlParse bool) map[string]interface{} {
+	env := map[string]interface{}{}
+	if enableYamlParse {
+		// Parse environment variable
+		for name, valueStr := range util.GetEnv() {
+			var value interface{}
+			// Parse value string
+			yaml.Unmarshal([]byte(valueStr), &value)
+			env[name] = value
+		}
+	} else {
+		for name, valueStr := range util.GetEnv() {
+			env[name] = valueStr
+		}
+	}
+
 	return map[string]interface{} {
+		"Env": env,
 		"Now": map[string]interface{}{
 			"year": time.Now().Year(),
 		},
