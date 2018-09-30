@@ -43,44 +43,28 @@ func FillVariables(dirPath string) error {
 	return err
 }
 
-func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
-	result := []diffmatchpatch.Diff{}
-	hasDiffInLine := false
-	lineDiffs := []diffmatchpatch.Diff{}
-	for _, diff := range diffs {
-		hasDiff := diff.Type != diffmatchpatch.DiffEqual
-		hasNewLine := strings.Contains(diff.Text, "\n")
-		if hasDiff {
-			// Set flag
-			hasDiffInLine = true
-		}
-		// If diff has newline
-		if hasNewLine {
-			// If diffs have some diff in line
-			if hasDiffInLine {
-				result = append(result, lineDiffs...)
-			}
-			hasDiffInLine = false
-			lineDiffs = []diffmatchpatch.Diff{}
-		}
-
-		// Append to line-diffs
-		lineDiffs = append(lineDiffs, diff)
-	}
-	// If diffs have some diff in line
-	if hasDiffInLine {
-		result = append(result, lineDiffs...)
-	}
-	return result
-}
-
 func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string) []diffmatchpatch.Diff {
 	// Calculate diffs between original and filled one
-	diffs := dmp.DiffMain(original, filled, false)
-	// Compact diffs
-	compactDiffs := getCompactDiffs(diffs)
+	// (from: https://qiita.com/shibukawa/items/dd75ad01e623c4c1166b)
+	a, b, c := dmp.DiffLinesToChars(original, filled)
+	diffs := dmp.DiffMain(a, b, false)
+	lineBasedDiffs := dmp.DiffCharsToLines(diffs, c)
 
-	return compactDiffs
+	// Use only not-equal diff
+	result := []diffmatchpatch.Diff{}
+	for _, d := range lineBasedDiffs {
+		if d.Type != diffmatchpatch.DiffEqual {
+			// Prepend "+" / "-"
+			switch d.Type {
+			case diffmatchpatch.DiffInsert:
+				d.Text = "+ " + d.Text
+			case diffmatchpatch.DiffDelete:
+				d.Text = "- " + d.Text
+			}
+			result = append(result, d)
+		}
+	}
+	return result
 }
 
 func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
