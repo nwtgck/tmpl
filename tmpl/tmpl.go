@@ -129,7 +129,10 @@ func InputVariables(prompt yaml.MapSlice, enableYamlParse bool) map[string]inter
 		var value interface{}
 		if enableYamlParse {
 			// Parse line and assign into value
-			yaml.Unmarshal([]byte(line), &value)
+			err := yaml.Unmarshal([]byte(line), &value)
+			if err != nil {
+				value = line
+			}
 			fmt.Println(value)
 		} else {
 			value = line
@@ -177,8 +180,12 @@ func GetReservedVariables(enableYamlParse bool) map[string]interface{} {
 		for name, valueStr := range util.GetEnv() {
 			var value interface{}
 			// Parse value string
-			yaml.Unmarshal([]byte(valueStr), &value)
-			env[name] = value
+			err := yaml.Unmarshal([]byte(valueStr), &value)
+			if err == nil {
+				env[name] = value
+			} else {
+				env[name] = valueStr
+			}
 		}
 	} else {
 		for name, valueStr := range util.GetEnv() {
