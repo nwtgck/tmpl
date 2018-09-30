@@ -136,7 +136,7 @@ func InputVariables(prompt yaml.MapSlice, enableYamlParse bool) map[string]inter
 			if err != nil {
 				value = line
 			}
-			fmt.Println(value)
+			//fmt.Println(value)
 		} else {
 			value = line
 		}
