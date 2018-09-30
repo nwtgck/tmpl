@@ -3,7 +3,10 @@ package util
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"strings"
+	"github.com/nishanths/go-hgconfig"
+	"github.com/tcnksm/go-gitconfig"
 )
 
 func Exists(path string) bool {
@@ -38,4 +41,25 @@ func GetEnv() map[string]string {
 		env[pair[0]] = pair[1]
 	}
 	return env
+}
+
+// (from: https://github.com/nishanths/license/blob/f710c596866841145b67e395cb16e570b11085eb/main.go#L127..L149)
+func GetUserName() string {
+	n, err := gitconfig.Username()
+	if err == nil {
+		return n
+	}
+	n, err = gitconfig.Global("user.name")
+	if err == nil {
+		return n
+	}
+	n, err = hgconfig.Username()
+	if err == nil {
+		return n
+	}
+	usr, err := user.Current()
+	if err == nil {
+		return usr.Name
+	}
+	return "<UNKNOWN USER>"
 }

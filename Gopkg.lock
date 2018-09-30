@@ -18,6 +18,14 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:7556c72cb9c173acd55344bf937eb2a16f669fe2a6d7120c4f09cae11bafa42e"
+  name = "github.com/nishanths/go-hgconfig"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c59fb2fd768f424de7382ebe291e9fdbdeb7790a"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
   name = "github.com/sergi/go-diff"
   packages = ["diffmatchpatch"]
@@ -42,6 +50,14 @@
   version = "v1.0.2"
 
 [[projects]]
+  digest = "1:ebabd8967efa341b15e51b329eb5b7ebc69b573fb4adb4ac2433fa532edcadbc"
+  name = "github.com/tcnksm/go-gitconfig"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d154598bacbf4501c095a309753c5d4af66caa81"
+  version = "v0.1.2"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -54,8 +70,10 @@
   analyzer-version = 1
   input-imports = [
     "github.com/MakeNowJust/heredoc",
+    "github.com/nishanths/go-hgconfig",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/spf13/cobra",
+    "github.com/tcnksm/go-gitconfig",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"

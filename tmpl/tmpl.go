@@ -201,6 +201,7 @@ func GetReservedVariables(enableYamlParse bool) map[string]interface{} {
 		"Now": map[string]interface{}{
 			"year": time.Now().Year(),
 		},
+		"UserName": util.GetUserName(),
 		"Git": map[string]interface{}{
 			"user": map[string]string{
 				"name": gitUserName(),
