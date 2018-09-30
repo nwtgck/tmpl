@@ -43,33 +43,26 @@ func FillVariables(dirPath string) error {
 	return err
 }
 
-func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
-	result := []diffmatchpatch.Diff{}
-	hasDiffInLine := false
-	lineDiffs := []diffmatchpatch.Diff{}
-	for _, diff := range diffs {
-		hasDiff := diff.Type != diffmatchpatch.DiffEqual
-		hasNewLine := strings.Contains(diff.Text, "\n")
-		if hasDiff {
-			// Set flag
-			hasDiffInLine = true
-		}
-		// If diff has newline
-		if hasNewLine {
-			// If diffs have some diff in line
-			if hasDiffInLine {
-				result = append(result, lineDiffs...)
-			}
-			hasDiffInLine = false
-			lineDiffs = []diffmatchpatch.Diff{}
-		}
+func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string) []diffmatchpatch.Diff {
+	// Calculate diffs between original and filled one
+	// (from: https://qiita.com/shibukawa/items/dd75ad01e623c4c1166b)
+	a, b, c := dmp.DiffLinesToChars(original, filled)
+	diffs := dmp.DiffMain(a, b, false)
+	lineBasedDiffs := dmp.DiffCharsToLines(diffs, c)
 
-		// Append to line-diffs
-		lineDiffs = append(lineDiffs, diff)
-	}
-	// If diffs have some diff in line
-	if hasDiffInLine {
-		result = append(result, lineDiffs...)
+	// Use only not-equal diff
+	result := []diffmatchpatch.Diff{}
+	for _, d := range lineBasedDiffs {
+		if d.Type != diffmatchpatch.DiffEqual {
+			// Prepend "+" / "-"
+			switch d.Type {
+			case diffmatchpatch.DiffInsert:
+				d.Text = "+ " + d.Text
+			case diffmatchpatch.DiffDelete:
+				d.Text = "- " + d.Text
+			}
+			result = append(result, d)
+		}
 	}
 	return result
 }
@@ -101,17 +94,16 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 			if err != nil {
 				return err
 			}
-			//// Overwrite filled one
+			// Overwrite filled one
 			ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
-			// Calculate diffs between original and filled one
-			diffs := dmp.DiffMain(string(original), buf.String(), false)
-			// Compact diffs
-			compactDiffs := getCompactDiffs(diffs)
+
+			// Get diffs
+			diffs := getDiffs(dmp, string(original), buf.String())
 			// If there are diffs
-			if len(compactDiffs) != 0 {
+			if len(diffs) != 0 {
 				// Print diffs
 				fmt.Printf("====== %s ======\n", fpath)
-				fmt.Println(dmp.DiffPrettyText(compactDiffs))
+				fmt.Println(dmp.DiffPrettyText(diffs))
 			}
 		}
 		return nil
