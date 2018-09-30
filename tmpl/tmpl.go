@@ -79,8 +79,13 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 	// Each file in the root directory
 	// (from: https://flaviocopes.com/go-list-files/)
 	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		// If path is in .git directory
+		// TODO: Use better way
+		if strings.Contains(path, ".git/") {
+			// Skip
+			return nil
 		// If path is not directory path
-		if !info.IsDir(){
+		} else if !info.IsDir(){
 			// Read whole file content
 			original, _ := ioutil.ReadFile(path)
 			// Create a new template and parse the letter into it.
