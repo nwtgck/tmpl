@@ -74,6 +74,15 @@ func getCompactDiffs(diffs []diffmatchpatch.Diff) []diffmatchpatch.Diff {
 	return result
 }
 
+func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string) []diffmatchpatch.Diff {
+	// Calculate diffs between original and filled one
+	diffs := dmp.DiffMain(original, filled, false)
+	// Compact diffs
+	compactDiffs := getCompactDiffs(diffs)
+
+	return compactDiffs
+}
+
 func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 	dmp := diffmatchpatch.New()
 	// Each file in the root directory
@@ -101,17 +110,16 @@ func ReplaceInDir(dirPath string, variables map[string]interface{}) error {
 			if err != nil {
 				return err
 			}
-			//// Overwrite filled one
+			// Overwrite filled one
 			ioutil.WriteFile(fpath, buf.Bytes(), info.Mode())
-			// Calculate diffs between original and filled one
-			diffs := dmp.DiffMain(string(original), buf.String(), false)
-			// Compact diffs
-			compactDiffs := getCompactDiffs(diffs)
+
+			// Get diffs
+			diffs := getDiffs(dmp, string(original), buf.String())
 			// If there are diffs
-			if len(compactDiffs) != 0 {
+			if len(diffs) != 0 {
 				// Print diffs
 				fmt.Printf("====== %s ======\n", fpath)
-				fmt.Println(dmp.DiffPrettyText(compactDiffs))
+				fmt.Println(dmp.DiffPrettyText(diffs))
 			}
 		}
 		return nil
