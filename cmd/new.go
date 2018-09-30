@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
 // Dry-run fill
@@ -29,8 +28,8 @@ var newCmd = &cobra.Command{
 		}
 		// Get git repository path
 		gitRepoPath := args[0]
-		// Git tmpRepoPath path
-		dirPath := getFileNameWithoutExt(gitRepoPath)
+		// Git dir path
+		dirPath := util.GetFileNameWithoutExt(gitRepoPath)
 		if len(args) == 2 {
 			dirPath = args[1]
 		}
@@ -75,10 +74,4 @@ var newCmd = &cobra.Command{
 		// Clean up temp directory
 		defer os.RemoveAll(tmpRepoPath)
 	},
-}
-
-// (from: https://qiita.com/KemoKemo/items/d135ddc93e6f87008521)
-func getFileNameWithoutExt(path string) string {
-	// Fixed with a nice method given by mattn-san
-	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
 }
