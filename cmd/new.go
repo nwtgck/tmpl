@@ -31,8 +31,12 @@ var newCmd = &cobra.Command{
 			dirPath = args[1]
 		}
 		if util.Exists(dirPath) {
-			fmt.Fprintf(os.Stderr, "Error: '%s' already exists.\n", dirPath)
-			os.Exit(-1)
+			if util.Ask4confirm(fmt.Sprintf("Are you sure to overwrite '%s'? ", dirPath)) {
+				os.RemoveAll(dirPath)
+			} else {
+				fmt.Println("Canceled.")
+				os.Exit(0)
+			}
 		}
 		tmpRepoPath, err := ioutil.TempDir("", "repo")
 		if err != nil {
