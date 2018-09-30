@@ -10,14 +10,6 @@
   revision = "e9091a26100e9cfb2b6a8f470085bfa541931a91"
 
 [[projects]]
-  digest = "1:c08f898868838e16e9f6caa00ea6eeb2bcbfcd8a374f602c3e3b305092079a3f"
-  name = "github.com/cbroglie/mustache"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "eb931a9d20042e51d8a3a9ad5a9ba9bc8282c564"
-  version = "v1.0.1"
-
-[[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
@@ -62,7 +54,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/MakeNowJust/heredoc",
-    "github.com/cbroglie/mustache",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/spf13/cobra",
     "gopkg.in/yaml.v2",
