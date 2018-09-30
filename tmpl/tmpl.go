@@ -34,7 +34,7 @@ func FillVariables(dirPath string, enableYamlParse bool, dryRun bool) error {
 	inputVariables := InputVariables(tmplYaml.Variables, enableYamlParse)
 
 	// Combine reserved variables
-	variables := GetReservedVariables(enableYamlParse)
+	variables := GetReservedVariables(enableYamlParse, dirPath)
 	for name, value := range inputVariables {
 		variables[name] = value
 	}
@@ -176,7 +176,7 @@ func gitUserEmail() string {
 	}
 }
 
-func GetReservedVariables(enableYamlParse bool) map[string]interface{} {
+func GetReservedVariables(enableYamlParse bool, dirPath string) map[string]interface{} {
 	env := map[string]interface{}{}
 	if enableYamlParse {
 		// Parse environment variable
@@ -196,12 +196,22 @@ func GetReservedVariables(enableYamlParse bool) map[string]interface{} {
 		}
 	}
 
+	// Get dir name
+	dirAbsPath, err := filepath.Abs(dirPath)
+	var dirName string
+	if err == nil {
+		dirName = util.GetFileNameWithoutExt(dirAbsPath)
+	} else {
+		dirName = "<UNKNOWN DIR NAME>"
+	}
+
 	return map[string]interface{} {
 		"Env": env,
 		"Now": map[string]interface{}{
 			"year": time.Now().Year(),
 		},
 		"UserName": util.GetUserName(),
+		"DirName": dirName,
 		"Git": map[string]interface{}{
 			"user": map[string]string{
 				"name": gitUserName(),

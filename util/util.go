@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strings"
 	"github.com/nishanths/go-hgconfig"
 	"github.com/tcnksm/go-gitconfig"
@@ -62,4 +63,10 @@ func GetUserName() string {
 		return usr.Name
 	}
 	return "<UNKNOWN USER>"
+}
+
+// (from: https://qiita.com/KemoKemo/items/d135ddc93e6f87008521)
+func GetFileNameWithoutExt(path string) string {
+	// Fixed with a nice method given by mattn-san
+	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
 }
