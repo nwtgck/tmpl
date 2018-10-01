@@ -58,12 +58,21 @@ func getDiffs(dmp *diffmatchpatch.DiffMatchPatch, original string, filled string
 			// Prepend "+" / "-"
 			switch d.Type {
 			case diffmatchpatch.DiffInsert:
-				d.Text = "+ " + d.Text
+				d.Text = prependEachLine(d.Text, "+")
 			case diffmatchpatch.DiffDelete:
-				d.Text = "- " + d.Text
+				d.Text = prependEachLine(d.Text, "-")
 			}
 			result = append(result, d)
 		}
+	}
+	return result
+}
+
+func prependEachLine(text string, prefix string) string {
+	lines := strings.Split(text, "\n")
+	result := ""
+	for _, line := range lines {
+		result += prefix + line + "\n"
 	}
 	return result
 }
