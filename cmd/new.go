@@ -12,10 +12,13 @@ import (
 
 // Dry-run fill
 var newDryRun bool
+// Fill by YAML
+var newFillYamlStr string
 
 func init() {
 	RootCmd.AddCommand(newCmd)
 	newCmd.Flags().BoolVarP(&newDryRun, "dry-run", "n", false, "dry-run")
+	newCmd.Flags().StringVar(&newFillYamlStr, "fill-yaml", "", "fill variables by YAML")
 }
 
 var newCmd = &cobra.Command{
@@ -66,7 +69,8 @@ var newCmd = &cobra.Command{
 		}
 
 		// Fill .tmpl with variables
-		err = tmpl.FillVariables(dirPath, true, newDryRun) // TODO: enableYamlParse is hard coded
+		// TODO: Hard code fill yaml
+		err = tmpl.FillVariables(dirPath, newFillYamlStr, true, newDryRun) // TODO: enableYamlParse is hard coded
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Fill failed with %s.\n", err)
 			os.Exit(-1)

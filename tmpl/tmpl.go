@@ -25,13 +25,20 @@ type TmplYaml struct {
 
 const TmplYamlName = "tmpl.yaml"
 
-func FillVariables(dirPath string, enableYamlParse bool, dryRun bool) error {
+func FillVariables(dirPath string, fillYamlStr string, enableYamlParse bool, dryRun bool) error {
 	tmplYaml, err := ReadTemplYaml(dirPath)
 	if err != nil {
 		return err
 	}
-	// Input variable values from user input
-	inputVariables := InputVariables(tmplYaml.Variables, enableYamlParse)
+
+	var inputVariables  map[string]interface{}
+	if fillYamlStr == "" {
+		// Input variable values from user input
+		inputVariables = InputVariables(tmplYaml.Variables, enableYamlParse)
+	} else {
+		// Parse yaml string and assign to inputVariables
+		yaml.Unmarshal([]byte(fillYamlStr), &inputVariables)
+	}
 
 	// Combine reserved variables
 	variables := GetReservedVariables(enableYamlParse, dirPath)
